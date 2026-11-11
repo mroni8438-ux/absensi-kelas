@@ -52,10 +52,9 @@ export default function LayarMasukPage() {
 
   return (
     <main className="w-full min-h-screen relative flex flex-col justify-center items-center p-4 overflow-hidden select-none">
-      {/* Background Gambar Gerbang Sekolah Modern (L6 Latar Penuh) */}
-      <div 
-        className="absolute inset-0 w-full h-full bg-cover bg-center scale-105 transition-all duration-700"
-        style={{ backgroundImage: "url('/latar/latar-lebar.jpg')" }}
+      {/* Background Gambar Gerbang Sekolah Modern (L6 Latar Penuh — Responsif HP & Desktop) */}
+      <div
+        className="absolute inset-0 w-full h-full bg-cover bg-center scale-105 transition-all duration-700 bg-login-sekolah"
       >
         {/* Fallback warna jika gambar lambat dimuat */}
         <div className="absolute inset-0 bg-page/90 backdrop-blur-[4px]"></div>

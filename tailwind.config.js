@@ -37,7 +37,7 @@ module.exports = {
         'pill': '9999px',
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+        sans: ['var(--font-jakarta)', 'var(--font-inter)', '"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
       },
       boxShadow: {
         'soft': '0 10px 25px -5px rgba(106, 118, 204, 0.08)',

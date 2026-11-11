@@ -5,10 +5,11 @@ import Link from 'next/link';
 import Penjaga from '../../../components/Penjaga';
 import SidebarDesktop from '../../../components/SidebarDesktop';
 import NavigasiBawah from '../../../components/NavigasiBawah';
-import { ambilDaftarPengguna, aturUlangSandi } from '../../../lib/api';
+import { ambilDaftarPengguna, getCachedDaftarPengguna, aturUlangSandi } from '../../../lib/api';
 
 export default function AdminPenggunaPage() {
   const [daftarPengguna, setDaftarPengguna] = useState([]);
+  const [memuat, setMemuat] = useState(true);
   const [cariKata, setCariKata] = useState('');
   const [filterPeran, setFilterPeran] = useState('semua');
   
@@ -29,14 +30,22 @@ export default function AdminPenggunaPage() {
   const [pesanNotif, setPesanNotif] = useState('');
 
   useEffect(() => {
+    const cached = getCachedDaftarPengguna();
+    if (cached) {
+      setDaftarPengguna(cached);
+      setMemuat(false);
+      return;
+    }
     muatPengguna();
   }, []);
 
   async function muatPengguna() {
+    setMemuat(true);
     const res = await ambilDaftarPengguna();
     if (res.ok && res.data) {
       setDaftarPengguna(res.data);
     }
+    setMemuat(false);
   }
 
   const penggunaFiltered = daftarPengguna.filter(p => {
@@ -56,7 +65,8 @@ export default function AdminPenggunaPage() {
     if (res.ok) {
       setSandiSementara(res.sandiSementara);
       setTersalin(false);
-      muatPengguna();
+      // K5: Perbarui status 1 baris pengguna langsung di state tanpa muat ulang semua akun
+      setDaftarPengguna(prev => prev.map(p => p.id === user.id ? { ...p, wajib_ganti_sandi: true } : p));
     } else {
       alert(res.pesan || 'Gagal mengatur ulang sandi');
       setTargetReset(null);
@@ -244,7 +254,13 @@ export default function AdminPenggunaPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-default/30 text-sm">
-                    {penggunaFiltered.map((p) => {
+                    {memuat && daftarPengguna.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-8 px-5 text-center text-xs font-semibold text-slate-400">
+                          Memuat daftar pengguna...
+                        </td>
+                      </tr>
+                    ) : penggunaFiltered.map((p) => {
                       const initial = p.nama_lengkap.split(' ').map(w => w[0]).slice(0, 2).join('');
                       return (
                         <tr key={p.id} className="hover:bg-surface-container-low/40 transition-colors">

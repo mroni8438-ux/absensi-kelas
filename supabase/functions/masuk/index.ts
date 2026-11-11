@@ -1,13 +1,24 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const ALLOWED_ORIGINS = [
+  "https://absensi-kelas-hotd.vercel.app",
+  "http://localhost:3000",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("Origin") || "";
+  return {
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
 
 serve(async (req: Request) => {
+  const CORS_HEADERS = getCorsHeaders(req);
+
   // Tangani preflight CORS
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS_HEADERS });
@@ -40,10 +51,10 @@ serve(async (req: Request) => {
       auth: { persistSession: false }
     });
 
-    // 1. Cari baris pengguna berdasarkan username, email, atau id
+    // 1. Cari baris pengguna berdasarkan username, email, atau id (kolom spesifik K2)
     const { data: userRows, error: searchError } = await adminClient
       .from("pengguna")
-      .select("*")
+      .select("id, auth_uid, username, email, nama_lengkap, peran, status_aktif, gagal_masuk, terkunci_sampai, wajib_ganti_sandi")
       .or(`username.ilike.${cleanId},email.ilike.${cleanId},id.ilike.${cleanId}`)
       .limit(1);
 
@@ -124,14 +135,16 @@ serve(async (req: Request) => {
       );
     }
 
-    // 5. Login berhasil: reset gagal_masuk dan terkunci_sampai
-    await adminClient
-      .from("pengguna")
-      .update({
-        gagal_masuk: 0,
-        terkunci_sampai: null
-      })
-      .eq("id", user.id);
+    // 5. Login berhasil: reset gagal_masuk hanya bila sebelumnya > 0 atau terkunci
+    if ((user.gagal_masuk || 0) > 0 || user.terkunci_sampai !== null) {
+      await adminClient
+        .from("pengguna")
+        .update({
+          gagal_masuk: 0,
+          terkunci_sampai: null
+        })
+        .eq("id", user.id);
+    }
 
     // Kembalikan token sesi dan profil pengguna (tanpa membuka password/data rahasia)
     return new Response(

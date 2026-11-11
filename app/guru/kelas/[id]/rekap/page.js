@@ -5,8 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import SidebarDesktop from '@/components/SidebarDesktop';
 import NavigasiBawah from '@/components/NavigasiBawah';
 import Penjaga from '@/components/Penjaga';
-import { ambilRekapBulanan, getDataAwal } from '@/lib/api';
-import * as XLSX from 'xlsx';
+import { ambilRekapBulanan, getDataAwal, getCachedDataAwal, getCachedRekapBulanan } from '@/lib/api';
 
 export default function RekapitulasiBulananPage() {
   const router = useRouter();
@@ -19,28 +18,45 @@ export default function RekapitulasiBulananPage() {
   const [loading, setLoading] = useState(true);
   const [namaSekolah, setNamaSekolah] = useState('SMP Negeri 1 Teladan');
 
+  // Muat profil sekolah sekali dari STATE/cache tanpa dipanggil ulang saat ganti bulan
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      const [rekapRes, awalRes] = await Promise.all([
-        ambilRekapBulanan(kelasId, bulan, tahun),
-        getDataAwal()
-      ]);
-
-      if (rekapRes.ok) {
-        setRekapData(rekapRes.data || []);
-      }
+    const cachedAwal = getCachedDataAwal();
+    if (cachedAwal?.pengaturan?.nama_sekolah) {
+      setNamaSekolah(cachedAwal.pengaturan.nama_sekolah);
+      return;
+    }
+    getDataAwal().then((awalRes) => {
       if (awalRes.ok && awalRes.data?.pengaturan?.nama_sekolah) {
         setNamaSekolah(awalRes.data.pengaturan.nama_sekolah);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    let aktif = true;
+    const cached = getCachedRekapBulanan(kelasId, bulan, tahun);
+    if (cached) {
+      setRekapData(cached);
+      setLoading(false);
+      return;
+    }
+    async function load() {
+      setLoading(true);
+      const rekapRes = await ambilRekapBulanan(kelasId, bulan, tahun);
+      if (!aktif) return;
+      if (rekapRes.ok) {
+        setRekapData(rekapRes.data || []);
       }
       setLoading(false);
     }
     load();
+    return () => { aktif = false; };
   }, [kelasId, bulan, tahun]);
 
-  // Fungsi Ekspor Spreadsheet Excel (.xlsx)
-  const handleExportExcel = () => {
+  // Fungsi Ekspor Spreadsheet Excel (.xlsx) — dimuat dinamis hanya saat tombol diklik
+  const handleExportExcel = async () => {
     if (!rekapData.length) return;
+    const XLSX = await import('xlsx');
 
     const dataToExport = rekapData.map((row, idx) => ({
       'No': idx + 1,

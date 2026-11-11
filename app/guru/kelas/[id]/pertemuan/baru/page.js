@@ -88,7 +88,7 @@ export default function InputPresensiPertemuanPage() {
       setNotif({ type: 'success', text: 'Presensi pertemuan berhasil disimpan ke database!' });
       setTimeout(() => {
         router.push(`/guru/kelas/${kelasId}/rekap`);
-      }, 1500);
+      }, 450);
     } else {
       setNotif({ type: 'error', text: res.pesan || 'Gagal menyimpan presensi.' });
     }

@@ -78,15 +78,20 @@ create table if not exists public.absensi (
 );
 
 -- ==============================================================================
--- INDEKS OPTIMALISASI KINERJA (QUERY FILTER & PENGURUTAN)
+-- INDEKS OPTIMALISASI KINERJA (QUERY FILTER & PENGURUTAN — K3)
 -- ==============================================================================
 create index if not exists idx_pengguna_username on public.pengguna(username);
+create index if not exists idx_pengguna_email on public.pengguna(email);
+create index if not exists idx_pengguna_lower_username on public.pengguna(lower(username));
+create index if not exists idx_pengguna_lower_email on public.pengguna(lower(email));
 create index if not exists idx_pengguna_auth_uid on public.pengguna(auth_uid);
 create index if not exists idx_siswa_kelas_id on public.siswa(kelas_id);
+create index if not exists idx_siswa_kelas_absen on public.siswa(kelas_id, nomor_absen asc);
 create index if not exists idx_siswa_nisn on public.siswa(nisn);
 create index if not exists idx_pertemuan_kelas_tanggal on public.pertemuan(kelas_id, tanggal desc);
 create index if not exists idx_absensi_pertemuan_id on public.absensi(pertemuan_id);
 create index if not exists idx_absensi_siswa_id on public.absensi(siswa_id);
+create index if not exists idx_absensi_siswa_dibuat on public.absensi(siswa_id, dibuat desc);
 
 -- ==============================================================================
 -- FUNGSI BANTU PERAN & IDENTITAS KEAMANAN (SECURITY DEFINER)

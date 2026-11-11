@@ -1,10 +1,13 @@
-const CACHE_NAME = 'absensi-kelas-cache-v1';
+const CACHE_NAME = 'absensi-kelas-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
+  '/masuk',
   '/offline',
   '/offline.html',
   '/favicon.svg',
   '/manifest.webmanifest',
+  '/latar/latar-lebar.jpg',
+  '/latar/latar-tinggi.jpg',
   '/aset-pwa/ikon-192.svg',
   '/aset-pwa/ikon-512.svg',
   '/logo/simbol.svg',
@@ -54,7 +57,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Aset Statis (Stale-While-Revalidate)
+  // Aset Statis (Cache Dulu, Perbarui di Latar — K7)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
@@ -65,7 +68,7 @@ self.addEventListener('fetch', (event) => {
           });
         }
         return networkResponse;
-      }).catch(() => {});
+      }).catch(() => cachedResponse || Response.error());
 
       return cachedResponse || fetchPromise;
     })

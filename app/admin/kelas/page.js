@@ -5,12 +5,14 @@ import Link from 'next/link';
 import Penjaga from '../../../components/Penjaga';
 import SidebarDesktop from '../../../components/SidebarDesktop';
 import NavigasiBawah from '../../../components/NavigasiBawah';
-import { getDataAwal, kelolaKelas, kelolaSiswa } from '../../../lib/api';
+import { getDataAwal, getCachedDataAwal, kelolaKelas, kelolaSiswa } from '../../../lib/api';
 
 export default function AdminKelasPage() {
   const [tabAktif, setTabAktif] = useState('kelas'); // 'kelas' | 'siswa'
   const [daftarKelas, setDaftarKelas] = useState([]);
   const [daftarSiswa, setDaftarSiswa] = useState([]);
+  const [memuat, setMemuat] = useState(true);
+  const [sedangSimpan, setSedangSimpan] = useState(false);
   const [cariKata, setCariKata] = useState('');
   const [filterTingkat, setFilterTingkat] = useState('semua');
   const [filterKelasSiswa, setFilterKelasSiswa] = useState('semua');
@@ -25,15 +27,24 @@ export default function AdminKelasPage() {
   const [formSiswa, setFormSiswa] = useState({ nisn: '', nama_lengkap: '', kelas_id: 'KLS-07A', jenis_kelamin: 'L', nomor_hp_wali: '' });
 
   useEffect(() => {
+    const cached = getCachedDataAwal();
+    if (cached) {
+      setDaftarKelas(cached.daftarKelas || []);
+      setDaftarSiswa(cached.daftarSiswa || []);
+      setMemuat(false);
+      return;
+    }
     muatData();
   }, []);
 
   async function muatData() {
+    setMemuat(true);
     const res = await getDataAwal();
     if (res.ok && res.data) {
       setDaftarKelas(res.data.daftarKelas || []);
       setDaftarSiswa(res.data.daftarSiswa || []);
     }
+    setMemuat(false);
   }
 
   const kelasFiltered = daftarKelas.filter(k => {
@@ -50,27 +61,38 @@ export default function AdminKelasPage() {
 
   async function handleSimpanKelas(e) {
     e.preventDefault();
-    if (!formKelas.nama_kelas) return;
+    if (!formKelas.nama_kelas || sedangSimpan) return;
+    setSedangSimpan(true);
     const res = await kelolaKelas('tambah', formKelas);
-    if (res.ok) {
+    setSedangSimpan(false);
+    if (res.ok && res.data) {
+      setDaftarKelas(prev => [...prev, res.data].sort((a, b) => (a.nama_kelas || '').localeCompare(b.nama_kelas || '')));
       setPesanNotif('Kelas baru berhasil ditambahkan!');
       setBukaModalKelas(false);
       setFormKelas({ nama_kelas: '', tingkat: '7', ruangan: 'Ruang 202 - Gedung A' });
-      await muatData();
       setTimeout(() => setPesanNotif(''), 3000);
+    } else if (!res.ok) {
+      alert(res.pesan || 'Gagal menyimpan kelas.');
     }
   }
 
   async function handleSimpanSiswa(e) {
     e.preventDefault();
-    if (!formSiswa.nama_lengkap || !formSiswa.nisn) return;
+    if (!formSiswa.nama_lengkap || !formSiswa.nisn || sedangSimpan) return;
+    setSedangSimpan(true);
     const res = await kelolaSiswa('tambah', formSiswa);
-    if (res.ok) {
+    setSedangSimpan(false);
+    if (res.ok && res.data) {
+      setDaftarSiswa(prev => [...prev, res.data]);
+      setDaftarKelas(prev => prev.map(k =>
+        k.id === res.data.kelas_id ? { ...k, total_siswa: (k.total_siswa || 0) + 1 } : k
+      ));
       setPesanNotif('Siswa baru berhasil didaftarkan!');
       setBukaModalSiswa(false);
       setFormSiswa({ nisn: '', nama_lengkap: '', kelas_id: 'KLS-07A', jenis_kelamin: 'L', nomor_hp_wali: '' });
-      await muatData();
       setTimeout(() => setPesanNotif(''), 3000);
+    } else if (!res.ok) {
+      alert(res.pesan || 'Gagal mendaftarkan siswa.');
     }
   }
 
@@ -236,6 +258,13 @@ export default function AdminKelasPage() {
 
             {/* TAB 1: DATA KELAS */}
             {tabAktif === 'kelas' && (
+              memuat && daftarKelas.length === 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} className="h-44 rounded-2xl bg-slate-100 animate-pulse border border-slate-200/60" />
+                  ))}
+                </div>
+              ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {kelasFiltered.map((k) => (
                   <div
@@ -253,7 +282,7 @@ export default function AdminKelasPage() {
                           </h3>
                         </div>
                         <span className="px-3 py-1 rounded-full bg-surface-container text-xs font-semibold text-on-surface-variant">
-                          {k.total_siswa || 32} Siswa
+                          {k.total_siswa || 0} Siswa
                         </span>
                       </div>
 
@@ -289,6 +318,7 @@ export default function AdminKelasPage() {
                   </div>
                 ))}
               </div>
+              )
             )}
 
             {/* TAB 2: DATA SISWA */}
@@ -391,9 +421,10 @@ export default function AdminKelasPage() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-2.5 rounded-full bg-primary text-on-primary font-bold text-xs shadow-md shadow-primary/20"
+                    disabled={sedangSimpan}
+                    className="flex-1 py-2.5 rounded-full bg-primary text-on-primary font-bold text-xs shadow-md shadow-primary/20 disabled:opacity-60"
                   >
-                    Simpan Rombel
+                    {sedangSimpan ? 'Menyimpan...' : 'Simpan Rombel'}
                   </button>
                 </div>
               </form>
@@ -477,9 +508,10 @@ export default function AdminKelasPage() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-2.5 rounded-full bg-primary text-on-primary font-bold text-xs shadow-md shadow-primary/20"
+                    disabled={sedangSimpan}
+                    className="flex-1 py-2.5 rounded-full bg-primary text-on-primary font-bold text-xs shadow-md shadow-primary/20 disabled:opacity-60"
                   >
-                    Daftarkan Siswa
+                    {sedangSimpan ? 'Menyimpan...' : 'Daftarkan Siswa'}
                   </button>
                 </div>
               </form>
