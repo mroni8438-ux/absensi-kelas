@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 500" width="1024" height="500">
+  <defs>
+    <style>
+      .title { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; font-weight: 800; font-size: 58px; fill: #FFFFFF; letter-spacing: -1px; }
+      .sub { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; font-weight: 600; font-size: 26px; fill: #E7EAFB; letter-spacing: 0.5px; }
+      .tag { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; font-weight: 700; font-size: 16px; fill: #6A76CC; }
+    </style>
+  </defs>
+
+  <!-- Latar Belakang Gradien Brand -->
+  <rect width="1024" height="500" fill="#6A76CC" />
+  
+  <!-- Hiasan Geometris Lembut -->
+  <circle cx="950" cy="80" r="260" fill="#5863B5" opacity="0.4" />
+  <circle cx="100" cy="450" r="180" fill="#7E8AE4" opacity="0.3" />
+
+  <!-- Badge Label -->
+  <rect x="80" y="90" width="220" height="38" rx="19" fill="#FFFFFF" />
+  <text x="190" y="115" text-anchor="middle" class="tag">SISTEM PRESENSI RESMI</text>
+
+  <!-- Nama Aplikasi -->
+  <text x="80" y="195" class="title">Absensi Kelas</text>
+  <text x="80" y="245" class="sub">Catat Kehadiran Harian &amp; Rekap Bulanan Otomatis</text>
+  <text x="80" y="285" font-family="'Plus Jakarta Sans', sans-serif" font-size="20px" fill="#D3D9F8">Cepat, Bebas Galat Hitung, dan Siap Cetak Dokumen Rapor Resmi</text>
+
+  <!-- Ikon Simbol Besar di Sisi Kanan -->
+  <g transform="translate(680, 110) scale(3.4)">
+    <path d="M38 74 C26 74 12 70 4 64 L4 26 C14 30 26 32 38 32 Z" fill="#FFFFFF" />
+    <path d="M42 74 C54 74 68 70 76 64 L76 26 C66 30 54 32 42 32 Z" fill="#FFFFFF" opacity="0.85" />
+    <rect x="38" y="31" width="4" height="43" rx="2" fill="#FFFFFF" opacity="0.6" />
+    <path d="M40 23 C30 21 25 11 30 4 C35 9 37 16 40 23 Z" fill="#FFFFFF" />
+    <path d="M40 23 C50 21 55 11 50 4 C45 9 43 16 40 23 Z" fill="#48BB78" />
+  </g>
+</svg>
+

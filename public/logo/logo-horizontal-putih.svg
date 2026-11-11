@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 100" width="460" height="100">
+  <!-- Logo Horizontal Putih (Untuk Header Gelap / Background #6A76CC) -->
+  <defs>
+    <style>
+      .wm-white { font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 50px; fill: #FFFFFF; letter-spacing: -1px; }
+      .wm-accent { font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 50px; fill: #E7EAFB; letter-spacing: -1px; }
+    </style>
+  </defs>
+
+  <g transform="translate(10, 8)">
+    <path d="M38 74 C26 74 12 70 4 64 L4 26 C14 30 26 32 38 32 Z" fill="#FFFFFF" />
+    <path d="M42 74 C54 74 68 70 76 64 L76 26 C66 30 54 32 42 32 Z" fill="#FFFFFF" opacity="0.85" />
+    <rect x="38" y="31" width="4" height="43" rx="2" fill="#FFFFFF" opacity="0.6" />
+    <path d="M40 23 C30 21 25 11 30 4 C35 9 37 16 40 23 Z" fill="#FFFFFF" />
+    <path d="M40 23 C50 21 55 11 50 4 C45 9 43 16 40 23 Z" fill="#48BB78" />
+  </g>
+
+  <text x="100" y="72" class="wm-white">bsensi</text>
+  <text x="275" y="72" class="wm-accent">Kelas</text>
+</svg>
+

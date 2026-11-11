@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 680" width="100%" height="100%">
+  <defs>
+    <style>
+      .title { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; font-size: 26px; font-weight: 800; fill: #0F172A; }
+      .desc { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; font-size: 14px; fill: #64748B; }
+      .badge { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; font-size: 13px; font-weight: 700; fill: #6A76CC; }
+      .card-bg { fill: #FFFFFF; filter: drop-shadow(0 4px 12px rgba(106, 118, 204, 0.08)); rx: 16px; }
+      .text-dark { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; font-weight: 800; font-size: 42px; fill: #1E293B; letter-spacing: -0.5px; }
+      .text-primary { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; font-weight: 800; font-size: 42px; fill: #6A76CC; letter-spacing: -0.5px; }
+      .text-sub { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; font-weight: 600; font-size: 18px; fill: #6A76CC; letter-spacing: 2px; }
+    </style>
+  </defs>
+
+  <!-- Latar Belakang Kanvas -->
+  <rect width="100%" height="100%" fill="#EFF2F9" />
+
+  <!-- Header -->
+  <text x="40" y="50" class="title">3 Konsep Logo Vektor Cerdas — Absensi Kelas</text>
+  <text x="40" y="78" class="desc">Dirancang sesuai standar formal sekolah tepercaya dengan palet Soft Indigo #6A76CC dari referensi visual R-01</text>
+
+  <!-- KARTU KONSEP A -->
+  <g transform="translate(40, 105)">
+    <rect width="820" height="160" class="card-bg" />
+    <rect x="25" y="20" width="90" height="26" rx="13" fill="#E7EAFB" />
+    <text x="70" y="38" text-anchor="middle" class="badge">KONSEP A</text>
+    <text x="130" y="38" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="16px" fill="#1E293B">Nama Cerdas: Titik 'i' Kalender Ceklis Presensi</text>
+    <text x="25" y="145" class="desc">Makna: Titik huruf 'i' berupa ikon lembar kalender presensi harian dengan centang hadir putih. Sangat cerdas, tegas, dan mudah dikenali.</text>
+
+    <!-- Render Logo A -->
+    <g transform="translate(25, 45)">
+      <text x="0" y="52" class="text-dark">Absens</text>
+      <!-- 'i' kalender -->
+      <rect x="165" y="24" width="10" height="28" rx="4" fill="#1E293B" />
+      <rect x="159" y="0" width="22" height="20" rx="4" fill="#6A76CC" />
+      <rect x="163" y="-3" width="3" height="5" rx="1.5" fill="#1E293B" />
+      <rect x="174" y="-3" width="3" height="5" rx="1.5" fill="#1E293B" />
+      <path d="M164 10 L168 14 L176 6" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+      <text x="190" y="52" class="text-primary">Kelas</text>
+    </g>
+  </g>
+
+  <!-- KARTU KONSEP B -->
+  <g transform="translate(40, 290)">
+    <rect width="820" height="160" class="card-bg" />
+    <rect x="25" y="20" width="90" height="26" rx="13" fill="#E7EAFB" />
+    <text x="70" y="38" text-anchor="middle" class="badge">KONSEP B</text>
+    <text x="130" y="38" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="16px" fill="#1E293B">Nama Cerdas: Huruf 'A' Buku Terbuka &amp; Tunas Tumbuh</text>
+    <text x="25" y="145" class="desc">Makna: Huruf 'A' awal dibentuk dari lembaran buku terbuka dengan tunas daun di pucuknya. Melambangkan kehadiran sebagai akar pertumbuhan siswa.</text>
+
+    <!-- Render Logo B -->
+    <g transform="translate(25, 48)">
+      <!-- A Buku & Tunas -->
+      <g transform="translate(0, 0)">
+        <path d="M24 45 C18 45 8 43 4 39 L4 16 C10 19 18 20 24 20 Z" fill="#1E293B" />
+        <path d="M27 45 C33 45 43 43 47 39 L47 16 C41 19 33 20 27 20 Z" fill="#6A76CC" />
+        <rect x="24" y="19" width="3" height="26" rx="1.5" fill="#5863B5" />
+        <path d="M25 15 C19 13 16 8 19 4 C22 7 24 11 25 15 Z" fill="#6A76CC" />
+        <path d="M26 15 C32 13 35 8 32 4 C29 7 27 11 26 15 Z" fill="#48BB78" />
+      </g>
+      <text x="56" y="48" class="text-dark">bsensi</text>
+      <text x="200" y="48" class="text-primary">Kelas</text>
+    </g>
+  </g>
+
+  <!-- KARTU KONSEP C -->
+  <g transform="translate(40, 475)">
+    <rect width="820" height="160" class="card-bg" />
+    <rect x="25" y="20" width="90" height="26" rx="13" fill="#E7EAFB" />
+    <text x="70" y="38" text-anchor="middle" class="badge">KONSEP C</text>
+    <text x="130" y="38" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="16px" fill="#1E293B">Monogram Geometris: Interlocking 'AK' + Indikator Kehadiran</text>
+    <text x="25" y="145" class="desc">Makna: Simbol lencana (badge) modern huruf A dan K saling mengunci dengan titik status hadir hijau aktif. Sangat ideal untuk ikon PWA dan kop rapor.</text>
+
+    <!-- Render Logo C -->
+    <g transform="translate(25, 52)">
+      <rect x="0" y="-8" width="60" height="60" rx="16" fill="#6A76CC" />
+      <!-- Kaki A -->
+      <path d="M16 40 L26 12 L32 12 L22 40 Z" fill="#FFFFFF" />
+      <rect x="30" y="12" width="6" height="28" rx="3" fill="#FFFFFF" />
+      <rect x="20" y="28" width="14" height="5" rx="2.5" fill="#FFFFFF" />
+      <!-- Sayap K -->
+      <path d="M37 26 L46 14 C48 12 50 13 49 15 L41 26 Z" fill="#FFFFFF" />
+      <path d="M35 24 L47 38 C48 40 46 42 44 40 L34 29 Z" fill="#FFFFFF" />
+      <!-- Titik Status Hijau -->
+      <circle cx="49" cy="5" r="5" fill="#48BB78" stroke="#FFFFFF" stroke-width="2" />
+
+      <text x="78" y="25" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="28px" fill="#1E293B">Absensi</text>
+      <text x="195" y="25" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="28px" fill="#6A76CC">Kelas</text>
+      <text x="78" y="46" font-family="'Plus Jakarta Sans', sans-serif" font-weight="600" font-size="14px" fill="#6A76CC" letter-spacing="1.5px">SISTEM PRESENSI RESMI</text>
+    </g>
+  </g>
+</svg>
+

@@ -1,0 +1,30 @@
+{
+  "name": "Absensi Kelas — Presensi Siswa Resmi",
+  "short_name": "AbsensiKelas",
+  "description": "Sistem Presensi Kelas Digital & Rekapitulasi Kehadiran Bulanan Otomatis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EFF2F9",
+  "theme_color": "#6A76CC",
+  "icons": [
+    {
+      "src": "/aset-pwa/ikon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/aset-pwa/ikon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/aset-pwa/ikon-maskable-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
+

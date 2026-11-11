@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Simbol Logo Absensi Kelas - Buku Terbuka & Tunas Tumbuh (Grid 100x100) -->
+  <g transform="translate(10, 8)">
+    <!-- Sayap Kiri Buku (Kaki Kiri Huruf A) -->
+    <path d="M38 74 C26 74 12 70 4 64 L4 26 C14 30 26 32 38 32 Z" fill="#1E293B" />
+    <!-- Sayap Kanan Buku (Kaki Kanan Huruf A) -->
+    <path d="M42 74 C54 74 68 70 76 64 L76 26 C66 30 54 32 42 32 Z" fill="#6A76CC" />
+    <!-- Punggung Buku (Tiang Tengah A) -->
+    <rect x="38" y="31" width="4" height="43" rx="2" fill="#5863B5" />
+    <!-- Tunas Daun / Siluet Pucuk A (Pertumbuhan & Prestasi) -->
+    <!-- Daun Kiri -->
+    <path d="M40 23 C30 21 25 11 30 4 C35 9 37 16 40 23 Z" fill="#6A76CC" />
+    <!-- Daun Kanan -->
+    <path d="M40 23 C50 21 55 11 50 4 C45 9 43 16 40 23 Z" fill="#48BB78" />
+  </g>
+</svg>
+

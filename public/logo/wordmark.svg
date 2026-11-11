@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 70" width="380" height="70">
+  <!-- Wordmark Murni Tanpa Simbol -->
+  <defs>
+    <style>
+      .wm-dark { font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 50px; fill: #1E293B; letter-spacing: -1px; }
+      .wm-primary { font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif; font-weight: 800; font-size: 50px; fill: #6A76CC; letter-spacing: -1px; }
+    </style>
+  </defs>
+  <text x="10" y="52">
+    <tspan class="wm-dark">Absensi </tspan>
+    <tspan class="wm-primary">Kelas</tspan>
+  </text>
+</svg>
+

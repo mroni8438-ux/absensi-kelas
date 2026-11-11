@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Favicon Absensi Kelas (Grid 32x32) -->
+  <rect width="32" height="32" rx="8" fill="#6A76CC" />
+  <g transform="translate(4, 3) scale(0.3)">
+    <!-- Sayap Kiri Buku (Putih) -->
+    <path d="M38 74 C26 74 12 70 4 64 L4 26 C14 30 26 32 38 32 Z" fill="#FFFFFF" />
+    <!-- Sayap Kanan Buku (Putih) -->
+    <path d="M42 74 C54 74 68 70 76 64 L76 26 C66 30 54 32 42 32 Z" fill="#E7EAFB" />
+    <rect x="38" y="31" width="4" height="43" rx="2" fill="#FFFFFF" />
+    <!-- Tunas Daun -->
+    <path d="M40 23 C30 21 25 11 30 4 C35 9 37 16 40 23 Z" fill="#FFFFFF" />
+    <path d="M40 23 C50 21 55 11 50 4 C45 9 43 16 40 23 Z" fill="#48BB78" />
+  </g>
+</svg>
+
