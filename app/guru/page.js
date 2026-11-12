@@ -5,6 +5,7 @@ import Link from 'next/link';
 import SidebarDesktop from '../../components/SidebarDesktop';
 import NavigasiBawah from '../../components/NavigasiBawah';
 import Penjaga from '../../components/Penjaga';
+import PanelMandiriDanIzinGuru from '../../components/guru/PanelMandiriDanIzinGuru';
 import { getDataAwal } from '../../lib/api';
 
 export default function DasborGuruPage() {
@@ -168,6 +169,17 @@ export default function DasborGuruPage() {
                 </Link>
               </div>
             </div>
+
+            {/* Tahap 2: Sesi Absen Mandiri (QR + Kode) & Persetujuan Izin Siswa */}
+            <PanelMandiriDanIzinGuru
+              kelasId={kelasAktif}
+              namaKelas={daftarKelas.find(k => k.id === kelasAktif)?.nama_kelas || kelasAktif}
+              daftarSiswa={daftarSiswa}
+              onDataBerubah={async () => {
+                const res = await getDataAwal(true);
+                if (res.ok) setDataAwal(res.data);
+              }}
+            />
           </main>
 
           {/* Panel 3: Sidebar Kanan (Statistik & Rekap) */}

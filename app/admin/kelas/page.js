@@ -5,10 +5,11 @@ import Link from 'next/link';
 import Penjaga from '../../../components/Penjaga';
 import SidebarDesktop from '../../../components/SidebarDesktop';
 import NavigasiBawah from '../../../components/NavigasiBawah';
-import { getDataAwal, getCachedDataAwal, kelolaKelas, kelolaSiswa } from '../../../lib/api';
+import { getDataAwal, getCachedDataAwal, kelolaKelas, kelolaSiswa, simpanPengaturanSekolah } from '../../../lib/api';
+import { ambilLokasiGPS } from '../../../lib/mediaHelper';
 
 export default function AdminKelasPage() {
-  const [tabAktif, setTabAktif] = useState('kelas'); // 'kelas' | 'siswa'
+  const [tabAktif, setTabAktif] = useState('kelas'); // 'kelas' | 'siswa' | 'lokasi'
   const [daftarKelas, setDaftarKelas] = useState([]);
   const [daftarSiswa, setDaftarSiswa] = useState([]);
   const [memuat, setMemuat] = useState(true);
@@ -25,12 +26,28 @@ export default function AdminKelasPage() {
   // Form states
   const [formKelas, setFormKelas] = useState({ nama_kelas: '', tingkat: '7', ruangan: 'Ruang 202 - Gedung A' });
   const [formSiswa, setFormSiswa] = useState({ nisn: '', nama_lengkap: '', kelas_id: 'KLS-07A', jenis_kelamin: 'L', nomor_hp_wali: '' });
+  const [formLokasi, setFormLokasi] = useState({
+    lokasi_sekolah_lat: '-6.200000',
+    lokasi_sekolah_lng: '106.816666',
+    radius_absen_meter: '150',
+    toleransi_alfa_maks: '3',
+  });
+  const [mengambilGps, setMengambilGps] = useState(false);
+  const [pesanLokasi, setPesanLokasi] = useState(null);
 
   useEffect(() => {
     const cached = getCachedDataAwal();
     if (cached) {
       setDaftarKelas(cached.daftarKelas || []);
       setDaftarSiswa(cached.daftarSiswa || []);
+      if (cached.pengaturan) {
+        setFormLokasi({
+          lokasi_sekolah_lat: String(cached.pengaturan.lokasi_sekolah_lat ?? '-6.200000'),
+          lokasi_sekolah_lng: String(cached.pengaturan.lokasi_sekolah_lng ?? '106.816666'),
+          radius_absen_meter: String(cached.pengaturan.radius_absen_meter ?? '150'),
+          toleransi_alfa_maks: String(cached.pengaturan.toleransi_alfa_maks ?? '3'),
+        });
+      }
       setMemuat(false);
       return;
     }
@@ -43,8 +60,67 @@ export default function AdminKelasPage() {
     if (res.ok && res.data) {
       setDaftarKelas(res.data.daftarKelas || []);
       setDaftarSiswa(res.data.daftarSiswa || []);
+      if (res.data.pengaturan) {
+        setFormLokasi({
+          lokasi_sekolah_lat: String(res.data.pengaturan.lokasi_sekolah_lat ?? '-6.200000'),
+          lokasi_sekolah_lng: String(res.data.pengaturan.lokasi_sekolah_lng ?? '106.816666'),
+          radius_absen_meter: String(res.data.pengaturan.radius_absen_meter ?? '150'),
+          toleransi_alfa_maks: String(res.data.pengaturan.toleransi_alfa_maks ?? '3'),
+        });
+      }
     }
     setMemuat(false);
+  }
+
+  async function handleAmbilGpsSekolah() {
+    setPesanLokasi(null);
+    setMengambilGps(true);
+    const res = await ambilLokasiGPS();
+    setMengambilGps(false);
+    if (!res.ok) {
+      setPesanLokasi({ ok: false, teks: res.pesan });
+      return;
+    }
+    setFormLokasi((prev) => ({
+      ...prev,
+      lokasi_sekolah_lat: res.latitude.toFixed(6),
+      lokasi_sekolah_lng: res.longitude.toFixed(6),
+    }));
+    setPesanLokasi({
+      ok: true,
+      teks: `Koordinat perangkat diambil (akurasi ±${res.akurasi || '?'}m). Klik "Simpan Lokasi & Aturan" untuk menerapkan.`,
+    });
+  }
+
+  async function handleSimpanLokasi(e) {
+    e.preventDefault();
+    setPesanLokasi(null);
+    const lat = parseFloat(formLokasi.lokasi_sekolah_lat);
+    const lng = parseFloat(formLokasi.lokasi_sekolah_lng);
+    const rad = parseInt(formLokasi.radius_absen_meter, 10);
+    const alfa = parseInt(formLokasi.toleransi_alfa_maks, 10);
+
+    if (Number.isNaN(lat) || Number.isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      setPesanLokasi({ ok: false, teks: 'Latitude (-90..90) atau Longitude (-180..180) tidak valid.' });
+      return;
+    }
+    if (Number.isNaN(rad) || rad < 20 || rad > 5000) {
+      setPesanLokasi({ ok: false, teks: 'Radius absen harus antara 20 sampai 5000 meter.' });
+      return;
+    }
+    if (Number.isNaN(alfa) || alfa < 1 || alfa > 30) {
+      setPesanLokasi({ ok: false, teks: 'Toleransi Alfa maksimal harus antara 1 sampai 30 pertemuan.' });
+      return;
+    }
+
+    setSedangSimpan(true);
+    const res = await simpanPengaturanSekolah(formLokasi);
+    setSedangSimpan(false);
+    if (res.ok) {
+      setPesanLokasi({ ok: true, teks: res.pesan || 'Pengaturan lokasi & aturan berhasil disimpan.' });
+    } else {
+      setPesanLokasi({ ok: false, teks: res.pesan || 'Gagal menyimpan pengaturan.' });
+    }
   }
 
   const kelasFiltered = daftarKelas.filter(k => {
@@ -159,8 +235,8 @@ export default function AdminKelasPage() {
               </div>
             </div>
 
-            {/* Dual Tab Switcher */}
-            <div className="flex items-center gap-2">
+            {/* Multi Tab Switcher */}
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setTabAktif('kelas')}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all shadow-sm ${
@@ -194,9 +270,22 @@ export default function AdminKelasPage() {
                   {daftarSiswa.length}
                 </span>
               </button>
+
+              <button
+                onClick={() => setTabAktif('lokasi')}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all shadow-sm ${
+                  tabAktif === 'lokasi'
+                    ? 'bg-primary text-on-primary shadow-primary/20'
+                    : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">location_on</span>
+                <span>Lokasi GPS &amp; Aturan</span>
+              </button>
             </div>
 
             {/* Filter and Action Toolbar */}
+            {tabAktif !== 'lokasi' && (
             <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-border-default/40 flex flex-col md:flex-row items-center justify-between gap-3">
               <div className="w-full md:max-w-md relative">
                 <span className="material-symbols-outlined absolute left-3 top-2.5 text-[20px] text-outline">search</span>
@@ -255,6 +344,7 @@ export default function AdminKelasPage() {
                 )}
               </div>
             </div>
+            )}
 
             {/* TAB 1: DATA KELAS */}
             {tabAktif === 'kelas' && (
@@ -364,6 +454,113 @@ export default function AdminKelasPage() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            )}
+
+            {/* TAB 3: LOKASI GPS & ATURAN ABSENSI */}
+            {tabAktif === 'lokasi' && (
+              <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-border-default/40 max-w-2xl space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border-default/40">
+                  <div>
+                    <h2 className="text-base font-extrabold text-on-surface">Titik Koordinat Sekolah &amp; Aturan Alfa</h2>
+                    <p className="text-xs text-outline mt-0.5">
+                      Digunakan untuk validasi radius GPS saat siswa melakukan Absen Mandiri dan batas peringatan dini siswa.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAmbilGpsSekolah}
+                    disabled={mengambilGps}
+                    className="px-4 py-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold flex items-center gap-1.5 shrink-0 disabled:opacity-60"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">my_location</span>
+                    <span>{mengambilGps ? 'Mengambil...' : 'Ambil GPS Perangkat Ini'}</span>
+                  </button>
+                </div>
+
+                {pesanLokasi && (
+                  <div className={`p-3.5 rounded-2xl text-xs font-bold border ${
+                    pesanLokasi.ok
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : 'bg-red-50 border-red-200 text-red-700'
+                  }`}>
+                    {pesanLokasi.teks}
+                  </div>
+                )}
+
+                <form onSubmit={handleSimpanLokasi} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">
+                        Latitude Sekolah
+                      </label>
+                      <input
+                        type="text"
+                        value={formLokasi.lokasi_sekolah_lat}
+                        onChange={(e) => setFormLokasi((p) => ({ ...p, lokasi_sekolah_lat: e.target.value }))}
+                        placeholder="-6.200000"
+                        className="w-full h-11 px-4 rounded-xl bg-surface-container-low text-sm font-mono font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary/40"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">
+                        Longitude Sekolah
+                      </label>
+                      <input
+                        type="text"
+                        value={formLokasi.lokasi_sekolah_lng}
+                        onChange={(e) => setFormLokasi((p) => ({ ...p, lokasi_sekolah_lng: e.target.value }))}
+                        placeholder="106.816666"
+                        className="w-full h-11 px-4 rounded-xl bg-surface-container-low text-sm font-mono font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary/40"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">
+                        Radius Absen Maksimal (Meter)
+                      </label>
+                      <input
+                        type="number"
+                        min={20}
+                        max={5000}
+                        value={formLokasi.radius_absen_meter}
+                        onChange={(e) => setFormLokasi((p) => ({ ...p, radius_absen_meter: e.target.value }))}
+                        className="w-full h-11 px-4 rounded-xl bg-surface-container-low text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary/40"
+                        required
+                      />
+                      <p className="text-[11px] text-outline mt-1">Rekomendasi sekolah: 100 – 250 meter.</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">
+                        Batas Toleransi Alfa (Semester)
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={formLokasi.toleransi_alfa_maks}
+                        onChange={(e) => setFormLokasi((p) => ({ ...p, toleransi_alfa_maks: e.target.value }))}
+                        className="w-full h-11 px-4 rounded-xl bg-surface-container-low text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary/40"
+                        required
+                      />
+                      <p className="text-[11px] text-outline mt-1">Menentukan peringatan merah di Portal Siswa.</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={sedangSimpan}
+                      className="px-6 py-2.5 rounded-full bg-primary hover:bg-primary-hover text-on-primary text-xs font-extrabold shadow-md shadow-primary/20 disabled:opacity-60"
+                    >
+                      {sedangSimpan ? 'Menyimpan...' : 'Simpan Lokasi & Aturan'}
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
           </main>

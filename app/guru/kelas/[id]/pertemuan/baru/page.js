@@ -5,40 +5,147 @@ import { useRouter, useParams } from 'next/navigation';
 import SidebarDesktop from '@/components/SidebarDesktop';
 import NavigasiBawah from '@/components/NavigasiBawah';
 import Penjaga from '@/components/Penjaga';
-import { getDataAwal, simpanPresensiBatch } from '@/lib/api';
+import {
+  ambilPengajuanIzinKelas,
+  ambilSesiMandiriGuru,
+  getDataAwal,
+  simpanPresensiBatch,
+  simpanPresensiSesiAktif,
+  tutupSesiMandiriGuru,
+} from '@/lib/api';
+
+function getTodayIso() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
 
 export default function InputPresensiPertemuanPage() {
   const router = useRouter();
   const params = useParams();
   const kelasId = params.id || 'KLS-07A';
 
-  const [tanggal, setTanggal] = useState('2026-11-10');
+  const [namaKelas, setNamaKelas] = useState(kelasId);
+  const [tanggal, setTanggal] = useState(getTodayIso());
   const [judulMateri, setJudulMateri] = useState('');
   const [catatanUmum, setCatatanUmum] = useState('');
   const [daftarSiswa, setDaftarSiswa] = useState([]);
   const [presensiItems, setPresensiItems] = useState({});
+  const [izinDisetujui, setIzinDisetujui] = useState([]);
+  const [sesiMandiri, setSesiMandiri] = useState(null);
+  const [tutupKodeSetelahSimpan, setTutupKodeSetelahSimpan] = useState(true);
+  const [jumlahAutoIzin, setJumlahAutoIzin] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notif, setNotif] = useState(null);
 
   useEffect(() => {
     async function init() {
-      const res = await getDataAwal();
+      const sesiParam =
+        typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('sesi') : null;
+
+      const [res, izinRes, sesiRes] = await Promise.all([
+        getDataAwal(),
+        ambilPengajuanIzinKelas(kelasId),
+        sesiParam ? ambilSesiMandiriGuru(kelasId) : Promise.resolve({ ok: false, data: [] }),
+      ]);
+
+      const disetujui = (izinRes.ok ? izinRes.data || [] : []).filter(
+        (item) => item.status === 'Disetujui'
+      );
+      setIzinDisetujui(disetujui);
+
+      let targetSesi = null;
+      if (sesiParam && sesiRes.ok) {
+        targetSesi = (sesiRes.data || []).find((s) => s.id === sesiParam) || null;
+        setSesiMandiri(targetSesi);
+        if (targetSesi) {
+          setTanggal(targetSesi.tanggal || getTodayIso());
+          setJudulMateri(targetSesi.judul_materi || '');
+        }
+      }
+
+      const tglEfektif = targetSesi?.tanggal || getTodayIso();
+
       if (res.ok && res.data?.daftarSiswa) {
-        const kelasSiswa = res.data.daftarSiswa.filter(s => s.kelas_id === kelasId);
+        const kelasInfo = (res.data.daftarKelas || []).find((k) => k.id === kelasId);
+        if (kelasInfo?.nama_kelas) setNamaKelas(kelasInfo.nama_kelas);
+
+        const kelasSiswa = res.data.daftarSiswa.filter((s) => s.kelas_id === kelasId);
         setDaftarSiswa(kelasSiswa);
-        
-        // Inisialisasi status default: SEMUA HADIR
+
+        const pesertaMap = {};
+        if (targetSesi?.peserta) {
+          targetSesi.peserta.forEach((p) => {
+            pesertaMap[p.siswa_id] = p;
+          });
+        }
+
+        let hitungIzin = 0;
         const initialMap = {};
-        kelasSiswa.forEach(s => {
-          initialMap[s.id] = { status: 'Hadir', catatan: '' };
+        kelasSiswa.forEach((s) => {
+          const checkIn = pesertaMap[s.id];
+          if (checkIn) {
+            initialMap[s.id] = {
+              status: checkIn.status || 'Hadir',
+              catatan: checkIn.catatan || 'Check-in Mandiri Siswa',
+              dariMandiri: true,
+            };
+            return;
+          }
+          const izinMatch = disetujui.find(
+            (iz) =>
+              iz.siswa_id === s.id &&
+              iz.tanggal_mulai <= tglEfektif &&
+              iz.tanggal_selesai >= tglEfektif
+          );
+          if (izinMatch) {
+            hitungIzin++;
+            initialMap[s.id] = {
+              status: izinMatch.jenis === 'Sakit' ? 'Sakit' : 'Izin',
+              catatan: `Disetujui online: ${izinMatch.alasan}`,
+              dariIzin: true,
+            };
+          } else {
+            initialMap[s.id] = { status: 'Hadir', catatan: '' };
+          }
         });
+        setJumlahAutoIzin(hitungIzin);
         setPresensiItems(initialMap);
       }
       setLoading(false);
     }
     init();
   }, [kelasId]);
+
+  const handleTanggalChange = (tglBaru) => {
+    setTanggal(tglBaru);
+    if (!tglBaru || daftarSiswa.length === 0) return;
+    let hitungIzin = 0;
+    setPresensiItems((prev) => {
+      const next = { ...prev };
+      daftarSiswa.forEach((s) => {
+        if (next[s.id]?.dariMandiri) return;
+        const izinMatch = izinDisetujui.find(
+          (iz) =>
+            iz.siswa_id === s.id &&
+            iz.tanggal_mulai <= tglBaru &&
+            iz.tanggal_selesai >= tglBaru
+        );
+        if (izinMatch) {
+          hitungIzin++;
+          next[s.id] = {
+            status: izinMatch.jenis === 'Sakit' ? 'Sakit' : 'Izin',
+            catatan: `Disetujui online: ${izinMatch.alasan}`,
+            dariIzin: true,
+          };
+        } else if (next[s.id]?.dariIzin) {
+          next[s.id] = { status: 'Hadir', catatan: '' };
+        }
+      });
+      return next;
+    });
+    setJumlahAutoIzin(hitungIzin);
+  };
 
   const handleStatusChange = (siswaId, status) => {
     setPresensiItems(prev => ({
@@ -74,18 +181,29 @@ export default function InputPresensiPertemuanPage() {
       catatan: presensiItems[s.id]?.catatan || '',
     }));
 
-    const res = await simpanPresensiBatch({
-      kelas_id: kelasId,
-      tanggal,
-      judul: judulMateri,
-      catatan: catatanUmum,
-      items
-    });
+    const res = sesiMandiri
+      ? await simpanPresensiSesiAktif(sesiMandiri.id, kelasId, items)
+      : await simpanPresensiBatch({
+          kelas_id: kelasId,
+          tanggal,
+          judul: judulMateri,
+          catatan: catatanUmum,
+          items,
+        });
+
+    if (res.ok && sesiMandiri && tutupKodeSetelahSimpan) {
+      await tutupSesiMandiriGuru(sesiMandiri.id);
+    }
 
     setSaving(false);
 
     if (res.ok) {
-      setNotif({ type: 'success', text: 'Presensi pertemuan berhasil disimpan ke database!' });
+      setNotif({
+        type: 'success',
+        text: sesiMandiri
+          ? 'Presensi sesi mandiri berhasil dilengkapi dan disimpan!'
+          : 'Presensi pertemuan berhasil disimpan ke database!',
+      });
       setTimeout(() => {
         router.push(`/guru/kelas/${kelasId}/rekap`);
       }, 450);
@@ -116,9 +234,13 @@ export default function InputPresensiPertemuanPage() {
                 >
                   <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                 </button>
-                <h1 className="font-black text-xl text-slate-800">Input Presensi Pertemuan</h1>
+                <h1 className="font-black text-xl text-slate-800">
+                  {sesiMandiri ? 'Lengkapi Presensi Sesi Mandiri' : 'Input Presensi Pertemuan'}
+                </h1>
               </div>
-              <p className="text-xs text-slate-500 ml-7">Kelas VII-A (32 Siswa Terdaftar)</p>
+              <p className="text-xs text-slate-500 ml-7">
+                {namaKelas} ({daftarSiswa.length} Siswa Terdaftar)
+              </p>
             </div>
 
             {/* Quick Actions */}
@@ -133,6 +255,22 @@ export default function InputPresensiPertemuanPage() {
               </button>
             </div>
           </div>
+
+          {/* Banner Sesi Mandiri / Izin Otomatis */}
+          {(sesiMandiri || jumlahAutoIzin > 0) && (
+            <div className="mb-4 p-3.5 rounded-2xl bg-primary-light/60 border border-primary/25 text-xs text-slate-700 space-y-1">
+              {sesiMandiri && (
+                <p className="font-bold text-primary">
+                  Melengkapi sesi absen mandiri ({sesiMandiri.peserta?.length || 0} siswa sudah check-in otomatis).
+                </p>
+              )}
+              {jumlahAutoIzin > 0 && (
+                <p className="font-semibold">
+                  {jumlahAutoIzin} siswa memiliki izin/sakit yang disetujui pada {tanggal} dan statusnya sudah diisi otomatis.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Notifikasi Status */}
           {notif && (
@@ -157,8 +295,9 @@ export default function InputPresensiPertemuanPage() {
                 <input
                   type="date"
                   value={tanggal}
-                  onChange={(e) => setTanggal(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:border-primary"
+                  disabled={Boolean(sesiMandiri)}
+                  onChange={(e) => handleTanggalChange(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:border-primary disabled:opacity-70"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -167,11 +306,24 @@ export default function InputPresensiPertemuanPage() {
                   type="text"
                   placeholder="Misal: Bab 3 - Menulis Teks Prosedur"
                   value={judulMateri}
+                  disabled={Boolean(sesiMandiri)}
                   onChange={(e) => setJudulMateri(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-primary"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-primary disabled:opacity-70"
                 />
               </div>
             </div>
+
+            {sesiMandiri && (
+              <label className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={tutupKodeSetelahSimpan}
+                  onChange={(e) => setTutupKodeSetelahSimpan(e.target.checked)}
+                  className="w-4 h-4 rounded accent-primary"
+                />
+                <span>Tutup kode absen mandiri setelah menyimpan presensi</span>
+              </label>
+            )}
 
             {/* Quick Live Counters */}
             <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-2 text-xs font-semibold">
@@ -225,7 +377,19 @@ export default function InputPresensiPertemuanPage() {
                             {idx + 1}
                           </td>
                           <td className="py-3 px-3">
-                            <p className="font-bold text-slate-800">{s.nama_lengkap}</p>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="font-bold text-slate-800">{s.nama_lengkap}</p>
+                              {presensiItems[s.id]?.dariMandiri && (
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">
+                                  Mandiri
+                                </span>
+                              )}
+                              {presensiItems[s.id]?.dariIzin && (
+                                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                                  Izin Disetujui
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[11px] text-slate-400 font-mono">NISN: {s.nisn}</p>
                           </td>
                           <td className="py-3 px-3">

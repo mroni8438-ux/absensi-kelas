@@ -9,9 +9,14 @@ export default function SidebarDesktop() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [activeHash, setActiveHash] = useState('');
 
   useEffect(() => {
     setUser(getActiveSession());
+    const syncHash = () => setActiveHash(window.location.hash || '');
+    syncHash();
+    window.addEventListener('hashchange', syncHash);
+    return () => window.removeEventListener('hashchange', syncHash);
   }, []);
 
   const handleLogout = async () => {
@@ -23,10 +28,22 @@ export default function SidebarDesktop() {
 
   const menuItems = [
     {
-      label: 'Dasbor Utama',
+      label: role === 'Siswa' ? 'Ringkasan Kehadiran' : 'Dasbor Utama',
       href: role === 'Admin' ? '/admin/kelas' : role === 'Siswa' ? '/siswa' : '/guru',
       icon: 'dashboard',
       roles: ['Admin', 'Guru', 'Siswa'],
+    },
+    {
+      label: 'Kalender Bulanan',
+      href: '/siswa#kalender',
+      icon: 'calendar_month',
+      roles: ['Siswa'],
+    },
+    {
+      label: 'Riwayat Presensi',
+      href: '/siswa#riwayat',
+      icon: 'history',
+      roles: ['Siswa'],
     },
     {
       label: 'Input Presensi',
@@ -85,11 +102,19 @@ export default function SidebarDesktop() {
           {menuItems
             .filter((item) => item.roles.includes(role))
             .map((item) => {
-              const isActive = pathname === item.href || (item.href !== '/guru' && pathname.startsWith(item.href));
+              const [itemPath, itemHash] = item.href.split('#');
+              const isHashItem = Boolean(itemHash);
+              const isActive = isHashItem
+                ? pathname === itemPath && activeHash === `#${itemHash}`
+                : item.href === '/siswa'
+                  ? pathname === '/siswa' && (!activeHash || activeHash === '#ringkasan')
+                  : pathname === item.href || (item.href !== '/guru' && pathname.startsWith(item.href));
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => setActiveHash(itemHash ? `#${itemHash}` : '')}
                   className={`flex items-center gap-3.5 px-4 py-3 rounded-full text-sm font-semibold transition-all ${
                     isActive
                       ? 'bg-primary text-white shadow-soft font-bold'

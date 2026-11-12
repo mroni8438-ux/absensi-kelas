@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Penjaga from '../../components/Penjaga';
 import SidebarDesktop from '../../components/SidebarDesktop';
 import NavigasiBawah from '../../components/NavigasiBawah';
-import { getActiveSession, gantiSandi, keluar } from '../../lib/api';
+import { getActiveSession, gantiSandi, keluar, ambilNomorHpSaya, perbaruiNomorHpSaya } from '../../lib/api';
 
 export default function ProfilPage() {
   const router = useRouter();
@@ -19,10 +19,38 @@ export default function ProfilPage() {
   const [pesanSukses, setPesanSukses] = useState('');
   const [sedangSimpan, setSedangSimpan] = useState(false);
 
+  // Nomor WhatsApp Wali Kelas / Admin
+  const [nomorHp, setNomorHp] = useState('');
+  const [simpanHp, setSimpanHp] = useState(false);
+  const [infoHp, setInfoHp] = useState(null);
+
   useEffect(() => {
     const user = getActiveSession();
-    if (user) setPengguna(user);
+    if (user) {
+      setPengguna(user);
+      setNomorHp(user.nomor_hp || '');
+      if (user.peran === 'Guru' || user.peran === 'Admin') {
+        ambilNomorHpSaya().then((res) => {
+          if (res.ok && res.nomor_hp !== undefined) setNomorHp(res.nomor_hp);
+        });
+      }
+    }
   }, []);
+
+  async function handleSimpanHp(e) {
+    e.preventDefault();
+    setInfoHp(null);
+    setSimpanHp(true);
+    const res = await perbaruiNomorHpSaya(nomorHp);
+    setSimpanHp(false);
+    if (res.ok) {
+      setNomorHp(res.nomor_hp || '');
+      setPengguna((prev) => (prev ? { ...prev, nomor_hp: res.nomor_hp || '' } : prev));
+      setInfoHp({ ok: true, teks: res.pesan || 'Nomor WhatsApp berhasil disimpan.' });
+    } else {
+      setInfoHp({ ok: false, teks: res.pesan || 'Gagal menyimpan nomor WhatsApp.' });
+    }
+  }
 
   async function handleGantiSandi(e) {
     e.preventDefault();
@@ -177,6 +205,38 @@ export default function ProfilPage() {
                         <span>Aktif & Terverifikasi (PWA Standar)</span>
                       </div>
                     </div>
+
+                    {(pengguna.peran === 'Guru' || pengguna.peran === 'Admin') && (
+                      <form onSubmit={handleSimpanHp} className="pt-2 border-t border-border-default/30 space-y-2.5">
+                        <label className="block text-xs font-bold text-outline uppercase">
+                          Nomor WhatsApp Aktif (Kontak Wali Kelas)
+                        </label>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="tel"
+                            value={nomorHp}
+                            onChange={(e) => setNomorHp(e.target.value)}
+                            placeholder="Contoh: 081234567890"
+                            className="flex-1 h-11 px-4 rounded-xl bg-surface-container-low border border-border-default/60 text-sm font-mono text-on-surface outline-none focus:border-primary"
+                          />
+                          <button
+                            type="submit"
+                            disabled={simpanHp}
+                            className="px-5 h-11 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors disabled:opacity-60 shrink-0"
+                          >
+                            {simpanHp ? 'Menyimpan...' : 'Simpan No. WA'}
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-outline">
+                          Nomor ini dipakai tombol &ldquo;Hubungi Wali Kelas&rdquo; di Portal Siswa &amp; Wali Murid.
+                        </p>
+                        {infoHp && (
+                          <p className={`text-xs font-bold ${infoHp.ok ? 'text-emerald-700' : 'text-red-600'}`}>
+                            {infoHp.teks}
+                          </p>
+                        )}
+                      </form>
+                    )}
                   </div>
                 </div>
 
