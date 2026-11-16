@@ -77,7 +77,17 @@ export default function PanelMandiriDanIzinGuru({
     muatPanel();
   }, [kelasId]);
 
-  const sesiAktif = daftarSesi.find((s) => s.masih_aktif) || null;
+  const nowMs = Date.now();
+  const sesiAktif =
+    daftarSesi.find((s) => {
+      if (typeof s.masih_aktif === 'boolean') {
+        if (!s.masih_aktif) return false;
+      }
+      if (s.kode_berlaku_sampai) {
+        return new Date(s.kode_berlaku_sampai).getTime() > nowMs;
+      }
+      return true;
+    }) || null;
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const qrPayload = sesiAktif?.kode_sesi
     ? (origin && `${origin}/siswa?kode=${sesiAktif.kode_sesi}`.length <= 100
@@ -109,6 +119,24 @@ export default function PanelMandiriDanIzinGuru({
     }
     setBukaFormSesi(false);
     setPesan({ tipe: 'ok', teks: `Sesi absen mandiri dibuka! Kode: ${res.data?.kode_sesi}` });
+
+    if (res.data?.pertemuan_id) {
+      const sesiBaru = {
+        id: res.data.pertemuan_id,
+        pertemuan_id: res.data.pertemuan_id,
+        kelas_id: kelasId,
+        tanggal: getTodayIso(),
+        judul_materi: judulSesi.trim() || 'Pertemuan Kelas',
+        kode_sesi: res.data.kode_sesi,
+        kode_berlaku_sampai: res.data.kode_berlaku_sampai,
+        masih_aktif: true,
+        wajib_selfie: Boolean(res.data.wajib_selfie),
+        wajib_gps: Boolean(res.data.wajib_gps),
+        peserta: [],
+      };
+      setDaftarSesi((prev) => [sesiBaru, ...prev.filter((s) => s.id !== sesiBaru.id && s.pertemuan_id !== sesiBaru.id)]);
+    }
+
     await muatPanel();
     onDataBerubah?.();
   }
@@ -333,7 +361,7 @@ export default function PanelMandiriDanIzinGuru({
 
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
                   <Link
-                    href={`/guru/kelas/${kelasId}/pertemuan/baru?sesi=${sesiAktif.id}`}
+                    href={`/guru/kelas/${kelasId}/pertemuan/baru?sesi=${sesiAktif.id || sesiAktif.pertemuan_id}`}
                     className="btn-touch px-4 py-2 rounded-full bg-primary hover:bg-primary-hover text-white text-xs font-bold flex items-center gap-1.5 shadow-sm"
                   >
                     <span className="material-symbols-outlined text-[15px]">fact_check</span>
@@ -341,11 +369,11 @@ export default function PanelMandiriDanIzinGuru({
                   </Link>
                   <button
                     type="button"
-                    onClick={() => handleTutupSesi(sesiAktif.id)}
-                    disabled={menutupId === sesiAktif.id}
+                    onClick={() => handleTutupSesi(sesiAktif.id || sesiAktif.pertemuan_id)}
+                    disabled={menutupId === (sesiAktif.id || sesiAktif.pertemuan_id)}
                     className="min-h-0 px-4 py-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold"
                   >
-                    {menutupId === sesiAktif.id ? 'Menutup...' : 'Tutup Kode Sesi'}
+                    {menutupId === (sesiAktif.id || sesiAktif.pertemuan_id) ? 'Menutup...' : 'Tutup Kode Sesi'}
                   </button>
                 </div>
               </div>

@@ -56,7 +56,7 @@ export default function InputPresensiPertemuanPage() {
 
       let targetSesi = null;
       if (sesiParam && sesiRes.ok) {
-        targetSesi = (sesiRes.data || []).find((s) => s.id === sesiParam) || null;
+        targetSesi = (sesiRes.data || []).find((s) => s.id === sesiParam || s.pertemuan_id === sesiParam) || null;
         setSesiMandiri(targetSesi);
         if (targetSesi) {
           setTanggal(targetSesi.tanggal || getTodayIso());
